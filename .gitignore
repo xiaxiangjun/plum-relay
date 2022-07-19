@@ -5,6 +5,7 @@
 *.so
 *.dylib
 *.sum
+*.conf
 
 # Test binary, built with `go test -c`
 *.test
@@ -19,4 +20,9 @@
 **/target/**
 .idea
 .vscode
+
+
+**/plum-ops/plum-ops
+**/plum-ops-server/plum-ops-server
+
 
