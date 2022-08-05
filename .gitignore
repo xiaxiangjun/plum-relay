@@ -22,7 +22,7 @@
 .vscode
 
 
-**/plum-ops/plum-ops
-**/plum-ops-server/plum-ops-server
+**/plum-relay/plum-relay
+**/plum-relay-server/plum-relay-server
 
 

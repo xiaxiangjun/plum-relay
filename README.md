@@ -1,11 +1,11 @@
-# plum-ops
+# plum-relay
 
-plum-ops是一款运维管理工具，主要用于不同网络之间可以相互访问，项目中采用了P2P、TUN、端口转发等多项技术的融合。
+plum-relay是一款运维管理工具，主要用于不同网络之间可以相互访问，项目中采用了P2P、TUN、端口转发等多项技术的融合。
 
 
 
-* plum-ops-server: 中心服务器兼中转服务器
-* plum-ops: 客户端
+* plum-relay-server: 中心服务器兼中转服务器
+* plum-relay: 客户端
 
 
 

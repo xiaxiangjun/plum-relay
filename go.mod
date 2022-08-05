@@ -1,4 +1,4 @@
-module plum-ops
+module plum-relay
 
 go 1.18
 

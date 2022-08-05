@@ -4,8 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"plum-ops/config"
-	"plum-ops/utils"
+	"plum-relay/config"
+	"plum-relay/utils"
 )
 
 func main() {
