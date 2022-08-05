@@ -21,3 +21,12 @@ func init() {
 func GetExePath(file string) string {
 	return filepath.Join(exePath, file)
 }
+
+func FileIsExist(file string) bool {
+	stat, err := os.Stat(file)
+	if nil != err {
+		return false
+	}
+
+	return false == stat.IsDir()
+}

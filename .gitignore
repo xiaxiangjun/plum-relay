@@ -20,7 +20,7 @@
 **/target/**
 .idea
 .vscode
-
+.conf
 
 **/plum-relay/plum-relay
 **/plum-relay-server/plum-relay-server

@@ -8,7 +8,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"github.com/BurntSushi/toml"
-	"io/ioutil"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -16,29 +15,26 @@ import (
 	"time"
 )
 
-// TOML文件格式如下
-// [server]
-// port=8603
-// cert=xxx
-// key=xxx
-//
-
-type ServerConfigRoot struct {
-	Server ServerConfig `toml:"server"`
-}
-
-type ServerConfig struct {
-	IP   string `toml:"ip"`
-	Port int    `toml:"port"`
-	Cert string `toml:"cert"`
-	Key  string `toml:"key"`
+type ClientConfigRoot struct {
+	Client ServerConfig `toml:"client"`
 }
 
 // 生成默认的配置文件
-func CreateServerDefault(path string, server string) error {
+func CreateClientDefault(clientCfg, serverCfg string) error {
 	// 判断文件是否存在
-	if utils.FileIsExist(path) {
-		return fmt.Errorf("config '%s' is exist", filepath.Base(path))
+	if utils.FileIsExist(clientCfg) {
+		return fmt.Errorf("config '%s' is exist", filepath.Base(clientCfg))
+	}
+
+	// 加载服务端配置文件
+	svrConfig, err := LoadServerConfig(serverCfg)
+	if nil != err {
+		return err
+	}
+
+	svrCert, svrKey, err := LoadCert([]byte(svrConfig.Server.Cert), []byte(svrConfig.Server.Key))
+	if nil != err {
+		return err
 	}
 
 	// 生成密钥
@@ -57,14 +53,14 @@ func CreateServerDefault(path string, server string) error {
 		NotBefore:             time.Now(),                                                   // 开始时间
 		NotAfter:              time.Now().AddDate(50, 0, 0),                                 // 过期时间
 		BasicConstraintsValid: true,                                                         // 基本的有效性约束
-		IsCA:                  true,                                                         // 是否根证书
+		IsCA:                  false,                                                        // 是否根证书
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature, // 数字签名, 密钥加密
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
-		DNSNames:              []string{server},
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		DNSNames:              []string{svrConfig.Server.IP},
 	}
 
 	// 生成证书
-	cert, err := x509.CreateCertificate(rand.Reader, &certTpl, &certTpl, &key.PublicKey, key)
+	cert, err := x509.CreateCertificate(rand.Reader, &certTpl, svrCert, &key.PublicKey, svrKey)
 	if nil != err {
 		return err
 	}
@@ -79,16 +75,16 @@ func CreateServerDefault(path string, server string) error {
 		Bytes: cert,
 	})
 
-	cfg := &ServerConfigRoot{
-		Server: ServerConfig{
-			IP:   server,
+	cfg := &ClientConfigRoot{
+		Client: ServerConfig{
+			IP:   svrConfig.Server.IP,
 			Port: 8603,
 			Cert: string(certPem),
 			Key:  string(keyPem),
 		},
 	}
 
-	fp, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	fp, err := os.OpenFile(clientCfg, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if nil != err {
 		return err
 	}
@@ -96,21 +92,4 @@ func CreateServerDefault(path string, server string) error {
 	defer fp.Close()
 	// 生成toml文件
 	return toml.NewEncoder(fp).Encode(cfg)
-}
-
-// 加载server配置文件
-func LoadServerConfig(path string) (*ServerConfigRoot, error) {
-	// 读取配置文件
-	txt, err := ioutil.ReadFile(path)
-	if nil != err {
-		return nil, err
-	}
-
-	cfg := &ServerConfigRoot{}
-	err = toml.Unmarshal(txt, cfg)
-	if nil != err {
-		return nil, err
-	}
-
-	return cfg, nil
 }

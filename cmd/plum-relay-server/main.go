@@ -9,31 +9,41 @@ import (
 )
 
 func main() {
-	var initConfig bool
+	var initConfig string
+	var ipConfig string
 
-	flag.BoolVar(&initConfig, "init", false, "write default config")
+	flag.StringVar(&initConfig, "init", "", "write server/client config")
+	flag.StringVar(&ipConfig, "ip", "", "server ip")
 
 	flag.Parse()
 
-	if initConfig {
-		// 创建配置文件
-		err := config.CreateServerDefault(utils.GetExePath("server.conf"))
-		if nil != err {
-			log.Println("write config fail:", err)
-		} else {
-			log.Println("write config success")
+	// 初始化配置文件
+	if "" != initConfig {
+		switch initConfig {
+		case "server": // 创建配置文件
+			// 判断是否配置IP信息
+			if "" == ipConfig {
+				log.Println("error: ip is not set")
+				return
+			}
+
+			err := config.CreateServerDefault(utils.GetExePath("server.conf"), initConfig)
+			if nil != err {
+				log.Println("write config fail:", err)
+			} else {
+				log.Println("write config success")
+			}
+		case "client": // 创建配置文件
+			err := config.CreateClientDefault(utils.GetExePath("client.conf"), utils.GetExePath("server.conf"))
+			if nil != err {
+				log.Println("write config fail:", err)
+			} else {
+				log.Println("write config success")
+			}
 		}
 
 		return
 	}
 
 	fmt.Println("exe: ", utils.GetExePath("test.conf"))
-}
-
-type Number interface {
-	~int | ~float64
-}
-
-func test[A Number](a, b A) A {
-	return a + b
 }
