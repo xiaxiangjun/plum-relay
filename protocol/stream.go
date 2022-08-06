@@ -11,8 +11,7 @@ import (
 
 // stream事件回调
 type StreamEvent interface {
-	OnClose(rs *RelayStream)
-	OnRequrest(rs *RelayStream, req *Frame) (res *Frame, err error)
+	OnRequrest(req *Frame) (res *Frame, err error)
 }
 
 type RelayStream struct {
@@ -65,7 +64,7 @@ func (self *RelayStream) onRequest(req *Frame) {
 		return
 	}
 
-	res, err := self.event.OnRequrest(self, req)
+	res, err := self.event.OnRequrest(req)
 	if nil != err {
 		res = NewFrame(FrameResponse, req.StreamID())
 		res.SetFlag(0x1)
