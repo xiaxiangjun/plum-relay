@@ -1,6 +1,7 @@
 package protocol
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"plum-relay/utils"
@@ -11,7 +12,7 @@ import (
 
 // stream事件回调
 type StreamEvent interface {
-	OnRequrest(req *Frame) (res *Frame, err error)
+	OnRequrest(stream *RelayStream, req *Frame) (res *Frame, err error)
 }
 
 type RelayStream struct {
@@ -42,6 +43,8 @@ func (self *RelayStream) init() {
 
 func (self *RelayStream) Serve() error {
 	for {
+		// 设置读取超时
+		self.conn.SetReadDeadline(time.Now().Add(time.Second * 15))
 		// 读取一帧数据
 		frame, err := ReadFrame(self.conn)
 		if nil != err {
@@ -64,10 +67,10 @@ func (self *RelayStream) onRequest(req *Frame) {
 		return
 	}
 
-	res, err := self.event.OnRequrest(req)
+	res, err := self.event.OnRequrest(self, req)
 	if nil != err {
 		res = NewFrame(FrameResponse, req.StreamID())
-		res.SetFlag(0x1)
+		res.SetFlag(FlagError)
 		res.SetBody([]byte(err.Error()))
 	}
 
@@ -135,4 +138,13 @@ func (self *RelayStream) Send(req *Frame, timeout int) (*Frame, error) {
 
 func (self *RelayStream) Close() {
 	self.conn.Close()
+}
+
+func (self *RelayStream) Detach(ctx context.Context) (net.Conn, error) {
+	c, ok := self.conn.(utils.IConnWrap)
+	if false == ok {
+		return nil, fmt.Errorf("error conn wrap")
+	}
+
+	return c.Detach(ctx), nil
 }
